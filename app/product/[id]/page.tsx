@@ -1,4 +1,3 @@
-// app/product/[id]/page.tsx - Next.js App Router structure
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -7,7 +6,6 @@ import Head from 'next/head';
 import { MOCK_PRODUCT, Variant } from '@/data/products';
 import { useStorage } from '@/hooks/use-storage';
 
-// Define the structure for the selected variant in the cart
 interface SelectedVariant {
   color: Variant;
   size: Variant;
@@ -19,14 +17,18 @@ interface LastViewedProduct {
   size: string;
   time: string;
 }
-// --- Dynamic Price Calculation ---
-const calculatePrice = (
+
+// --- Dynamic Price Calculation ---//
+const calculatePricePerUnit = (
   base: number,
   colorMod: number,
   sizeMod: number
-): string => {
-  const totalPrice = base + colorMod + sizeMod;
-  return totalPrice.toLocaleString('en-IN', {
+): number => {
+  return base + colorMod + sizeMod;
+};
+
+const formatPrice = (price: number): string => {
+  return price.toLocaleString('en-IN', {
     style: 'currency',
     currency: 'INR',
     minimumFractionDigits: 2,
@@ -35,47 +37,46 @@ const calculatePrice = (
 
 // --- Product Page Component ---
 export default function ProductPage({ params }: { params: { id: string } }) {
-  // Simulating fetching product data (in a real app, you'd use params.id)
   const product = MOCK_PRODUCT;
 
-  // 1. STATE MANAGEMENT
   const [selectedColor, setSelectedColor] = useState(product.variants.colors[0]);
   const [selectedSize, setSelectedSize] = useState(product.variants.sizes[0]);
   const [quantity, setQuantity] = useState(1);
   
-  // 2. PERSISTENCE (localStorage for Cart, sessionStorage for Last Viewed)
-  // Cart items persistence (Requirement: Store selected variant in localStorage)
   const [cartItems, setCartItems] = useStorage<SelectedVariant[]>(
     'productConfiguratorCart', 
     []
   );
 
-  // Last viewed properties tracking (Requirement: Track last viewed using sessionStorage)
   const [lastViewed, setLastViewed] = useStorage<LastViewedProduct | null>(
     'lastViewedProduct', 
-    null, // Initial value is null or an empty object {}
+    null,
     'sessionStorage'
 );
 
   // Update last viewed on variant change
-useEffect(() => {
+  useEffect(() => {
     setLastViewed({ 
-        id: product.id, 
-        color: selectedColor.name, 
-        size: selectedSize.name, 
-        time: new Date().toISOString()
+      id: product.id, 
+      color: selectedColor.name, 
+      size: selectedSize.name, 
+      time: new Date().toISOString()
     });
-}, [product.id, selectedColor.name, selectedSize.name, setLastViewed]);
+  }, [product.id, selectedColor.name, selectedSize.name, setLastViewed]);
 
 
-  // 3. DYNAMIC PRICE CALCULATION (useMemo for performance)
-  const dynamicPrice = useMemo(() => {
-    return calculatePrice(
+  // 3. DYNAMIC PRICE CALCULATION
+  const pricePerUnit = useMemo(() => {
+    return calculatePricePerUnit(
       product.basePrice,
       selectedColor.modifier,
       selectedSize.modifier
     );
   }, [product.basePrice, selectedColor, selectedSize]);
+  
+  const totalPrice = pricePerUnit * quantity;
+  const formattedTotalPrice = formatPrice(totalPrice);
+  const formattedPricePerUnit = formatPrice(pricePerUnit);
 
   // --- Handlers ---
   const handleAddToCart = () => {
@@ -85,10 +86,9 @@ useEffect(() => {
       quantity: quantity,
     };
     
-    // Add the new item to the existing cart items
     setCartItems((prevItems) => [...prevItems, newItem]);
     
-    alert(`Added ${quantity} x ${selectedColor.name} ${selectedSize.name} T-Shirt to cart! Cart items: ${cartItems.length + 1}`);
+    alert(`Added ${quantity} x ${selectedColor.name} ${selectedSize.name} T-Shirt for ${formattedTotalPrice} to cart! Cart items: ${cartItems.length + 1}`);
   };
 
   // --- Rendering Helpers ---
@@ -97,14 +97,13 @@ useEffect(() => {
 
   return (
     <>
-      {/* 4. SSR + SEO META + Open Graph (Requirement) */}
       <Head>
         <title>{product.name} - Configurator</title>
         <meta name="description" content={product.description} />
-        {/* Open Graph Tags for Social Sharing */}
+        
         <meta property="og:title" content={`${product.name} | ${selectedColor.name} | ${selectedSize.name}`} />
         <meta property="og:description" content={`Customize your ${selectedColor.name} T-Shirt now!`} />
-        {/* Open Graph Preview (Requirement: shows selected variant thumbnail) */}
+        
         <meta property="og:image" content={currentImageUrl} />
         <meta property="og:url" content={`/product/${product.id}`} />
       </Head>
@@ -114,7 +113,6 @@ useEffect(() => {
         
         <div className="flex flex-col md:flex-row gap-8">
           
-          {/* 5. Product Image Section (2/3 width on desktop) */}
           <div className="md:w-2/3 relative aspect-square">
             <div className={`w-full h-full relative overflow-hidden rounded-lg shadow-xl ${colorTransitionClass}`}>
               <Image
@@ -124,22 +122,22 @@ useEffect(() => {
                 priority
                 className={`object-cover ${colorTransitionClass} opacity-100`}
               />
-              {/* Bonus: Crossfade effect (simplified: a single image update with a fade-in) 
-                  A true crossfade would involve two separate image elements for cleaner transition.
-              */}
             </div>
           </div>
           
-          {/* 6. Controls/Configurator Section (1/3 width on desktop) */}
           <div className="md:w-1/3 space-y-6">
             <p className="text-gray-600">{product.description}</p>
 
             {/* Price Display */}
             <div className="py-2">
+              {/* Displaying the total price */}
               <span className="text-4xl font-extrabold text-indigo-600">
-                {dynamicPrice}
+                {formattedTotalPrice}
               </span>
               <p className="text-sm text-gray-500 mt-1">
+                ({formattedPricePerUnit} per unit)
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
                 (Base ₹{product.basePrice} + Color {selectedColor.modifier} + Size {selectedSize.modifier})
               </p>
             </div>
@@ -201,11 +199,11 @@ useEffect(() => {
         </div>
       </div>
       
-      {/* 7. Sticky "Add to Cart" CTA (Requirement: Responsive layout with sticky CTA) */}
+      {/* Sticky "Add to Cart" CTA */}
       <div className="sticky bottom-0 bg-white/95 border-t border-gray-200 p-4 shadow-2xl z-10">
           <div className="container mx-auto flex justify-between items-center">
               <div className="text-lg font-bold">
-                  Total: {dynamicPrice}
+                  Total: {formattedTotalPrice}
               </div>
               <button
                   onClick={handleAddToCart}
