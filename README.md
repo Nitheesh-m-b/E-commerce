@@ -10,21 +10,3 @@ State & Logic: React Hooks (useState, useMemo, useEffect)
 Storage: localStorage and sessionStorage
 
 
-
-📂 Project Structure
-The key files defining the structure and functionality of the configurator are:
-
-.
-├── app/
-│   ├── page.tsx                       # Home Page (Route: /)
-│   └── product/
-│       └── [id]/
-│           └── page.tsx               # The main Product Configurator Component
-├── data/
-│   └── products.ts                    # Defines MOCK_PRODUCT data, base prices, and variant modifiers.
-├── hooks/
-│   └── use-storage.ts                 # Reusable utility for client-side localStorage and sessionStorage access.
-├── public/
-│   └── images/                        # Placeholder images (e.g., tshirt-red.jpg) for variants.
-├── package.json
-└── tsconfig.json
