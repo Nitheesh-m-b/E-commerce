@@ -1,3 +1,4 @@
+Deployment url:https://e-commerce-two-dusky-91.vercel.app/
 🛠️ Technology Stack
 Framework: Next.js (App Router)
 
