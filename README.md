@@ -1,4 +1,4 @@
-<img width="1024" height="1024" alt="image" src="https://github.com/user-attachments/assets/f9466a5f-0144-442e-8802-94053f61a256" /># 👕 Custom E-Commerce Product Configurator (Next.js & TypeScript)
+Shopify (Buy T-shirts Online) (Next.js & TypeScript)
 
 A modern, dynamic product customizer built with **Next.js**, allowing users to configure a product (like a T-shirt) based on size, color, and quantity, with **real-time price calculation** and **state persistence**.
 
